@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" role="img" aria-label="LZ4 Game Compressor">
+<rect width="512" height="512" fill="#101827"/>
+<g fill="#6da5ff">
+<path d="M40 230h87l-37-46 31-25 65 81q13 16 0 32l-65 81-31-25 37-46H40z"/>
+<path d="M472 230h-87l37-46-31-25-65 81q-13 16 0 32l65 81 31-25-37-46h87z"/>
+<path d="M220 80h72q-38 176 0 352h-72q38-176 0-352z"/>
+</g></svg>

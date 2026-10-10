@@ -1,0 +1,42 @@
+# Build outputs
+/build/
+/out/
+
+# Binaries and libraries
+*.o
+*.obj
+*.lo
+*.a
+*.so
+*.dylib
+*.dll
+*.exe
+
+# PS5 outputs
+/ps5/*.elf
+/ps5/*.prx
+/ps5/*.sprx
+/ps5/build_prx_libkernel/
+
+# IDE/editor junk
+/.vscode/
+/.vs/
+/.idea/
+*.swp
+*.swo
+.DS_Store
+*.vcxproj.user
+*.VC.db
+*.VC.opendb
+ps5/sce_stubs/
+*.sprx.c
+__pycache__
+*.log
+
+
+msbuild/**
+!msbuild/
+!msbuild/Prospero.App.props
+!msbuild/Prospero.Common.props
+!msbuild/libSceAmpr/
+!msbuild/libSceAmpr/libSceAmpr.vcxproj

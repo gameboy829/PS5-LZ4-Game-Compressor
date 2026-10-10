@@ -1,0 +1,14 @@
+**/build/
+**/gen/
+**/out/
+**/bin/
+**/logs/
+**/__pycache__/
+*.o
+*.a
+*.elf
+*.exe
+*.dll
+*.zip
+ampr-ps5/standalone/assets.h
+ampr-ps5/standalone/launcher-assets.h

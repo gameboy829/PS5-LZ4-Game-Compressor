@@ -1,0 +1,11 @@
+{
+  "titleId": "LZGC50001",
+  "applicationCategoryType": 65536,
+  "deeplinkUri": "http://127.0.0.1:5911/",
+  "localizedParameters": {
+    "defaultLanguage": "en-US",
+    "en-US": {
+      "titleName": "LZ4 Game Compressor beta.1"
+    }
+  }
+}
