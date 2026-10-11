@@ -17,3 +17,4 @@
 .stage-track [hidden]{display:none!important}.stage-track span{min-width:0;flex:1;font-size:1.65vh;padding:.8vh .45vw}#bigPercent{overflow-wrap:anywhere}
 
 #mount.folder-source:disabled{background:#30384b;border-color:#455066;color:#b8c0ce;opacity:1}
+#reportDialog{font-size:1.8vh;padding:2vh 2vw}#reportDialog label{margin-top:.5vh;font-size:1.8vh}#reportDialog input:not([type=checkbox]),#reportDialog textarea{width:100%;padding:.5vh 1vw;font:inherit;color:var(--text);background:var(--bg);border:1px solid var(--line);border-radius:.5vh}#reportDialog p{font-size:1.6vh;margin:.7vh 0}#reportDialog .dialog-heading{margin-bottom:1vh}#reportImages{display:flex;justify-content:center;gap:1vw;margin:.5vh 0;max-height:12vh}#reportImages img{max-height:12vh!important}#reportDialog .actions{margin-top:1vh}

@@ -1,18 +1,9 @@
-# LZ4 Game Compressor beta.3
+# LZ4 Game Compressor beta.4
 
-This release fixes the missing Media shortcut by using the newer PS5 app registration method. Registration was verified on firmware 12.20, and a user confirmed that the shortcut works after a clean installation. Other firmware versions still need confirmation.
+Report a problem directly from the app with a title and description. Reports include Setup and Progress images, detected games and storage devices, dropdown choices, selected settings and diagnostic logs. Images capture only the app interface.
 
-Download **LZ4-Game-Compressor.elf** and load it with Payload Manager after stopping any active conversion. This single payload starts the compressor and installs or refreshes its Media shortcut. Reload an open browser to see the updated interface. The shortcut opens the local interface; the payload must be running.
+You can preview the images and save the full report before sending. Submission requires your consent and goes to a private GitHub repository through the report service; no GitHub login is needed. Large logs include their last 1 MiB and are marked when truncated. Reports can contain game names and file paths.
 
-Also included:
+To update, open Updates, choose Check for updates, then Install and restart. Finish any conversion first. The download remains named LZ4-Game-Compressor.elf.
 
-- **Updates** in the app: check GitHub releases and download, install, and restart a newer version. Downloads use HTTPS and SHA-256 verification. The complete download, verification, installation, and restart sequence was tested on a PS5.
-- Completed conversions stop the elapsed timer and show a completion message with the total duration.
-- The ELF filename stays the same across releases, and the Media shortcut is named **LZ4 Game Compressor**.
-- Updated beta.3 download: fixes GitHub download header limits, certificate-chain compatibility, and the restart-helper location. If the previous in-app updater fails, load this ELF manually once. Existing beta.3 installations will not detect another beta.3 build as a newer version.
-
-**Supported sources are mountable PS5 game images and extracted game folder dumps.** Images must be mountable by ShadowMountPlus; dumps need `eboot.bin`, `sce_sys/param.json`, and the game files. Level 7 and verification remain the defaults.
-
-This fix addresses shortcut registration. It does not claim to fix the separate folder-loading or connection-loss reports. This is beta software: keep your original game when trying a conversion for the first time. Content verification does not guarantee that every game will launch correctly.
-
-Dependencies and credits are documented in the repository's CREDITS.md and THIRD_PARTY_NOTICES.md. No game content or proprietary Sony SDK is included.
+This beta supports only mountable PS5 game images and extracted game folder dumps. Keep backups: verification does not guarantee a game will launch. PS5 browser image capture still needs broader firmware testing. A failed submission can be saved for a later retry.

@@ -145,11 +145,13 @@ static J setupRoute(const Request&r){
     return J{{"ok",true},{"revision",setupRevision},{"settings",sharedSetup}};
 }
 #include "updater.inc"
+#include "report.inc"
 static J route(const Request&r){
     auto path=r.path;bool mutation=r.method=="POST";require(mutation||r.method=="GET","Unsupported method");
     if(path=="/api/gc/ampr-lz4/update")return updaterStatus();
     if(path=="/api/gc/ampr-lz4/update/check"||path=="/api/gc/ampr-lz4/update/install"){require(mutation,"Use POST for updates");std::lock_guard<std::mutex> lock(control);{std::lock_guard<std::mutex> guard(stateLock);require(!state.value("active",false),"Wait for the conversion or performance test to finish before updating");}updateStart(path.find("/install")!=std::string::npos);return updaterStatus();}
     if(updateBusy&&mutation)throw std::runtime_error("Wait for the update to finish");
+    if(path=="/api/gc/ampr-lz4/report"){require(!mutation,"Use GET for diagnostics");return diagnosticReport();}
     if(path=="/api/gc/ampr-lz4/setup")return setupRoute(r);
     if(path=="/api/gc/ampr-lz4/status")return status();
     if(path=="/api/control/handoff-state"){auto s=status();return J{{"ok",true},{"busy",s["active"]}};}

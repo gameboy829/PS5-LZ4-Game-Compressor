@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 import pathlib, mimetypes
 root=pathlib.Path(__file__).resolve().parent.parent
-names=('ampr-studio.html','ampr-studio.css','ampr-studio.js','ampr-tv.js','ampr-sync.js','ampr-progress.js','ampr-diagnostics.js','ampr-update.js','lz4-logo.svg','ampr-runtime.sprx','update-helper.elf')
+names=('ampr-studio.html','ampr-studio.css','ampr-studio.js','ampr-tv.js','ampr-sync.js','ampr-progress.js','ampr-diagnostics.js','ampr-update.js','ampr-report.js','report-config.json','html2canvas.min.js','html2canvas-LICENSE.txt','lz4-logo.svg','ampr-runtime.sprx','update-helper.elf')
 lines=['// Generated from application assets.', 'static constexpr const char* APP_VERSION="'+(root.parent/'VERSION').read_text().strip()+'";','struct EmbeddedAsset {const char* name;const char* mime;const unsigned char* data;size_t size;};']
 for i,name in enumerate(names):
     data=(root/'build/update-helper.elf' if name=='update-helper.elf' else root/'assets'/name).read_bytes()
