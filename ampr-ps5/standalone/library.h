@@ -31,7 +31,7 @@ inline std::string storageName(const std::string& path){if(path.rfind("/data/",0
 inline LibraryJson folderGame(const libraryfs::path& input){
     struct stat st{};if(lstat(input.c_str(),&st)!=0||!S_ISDIR(st.st_mode))return LibraryJson();
     bool allowed=false;for(const auto& root:libraryRoots())if(pathBelow(root,input)&&libraryfs::weakly_canonical(root)!=libraryfs::weakly_canonical(input)){allowed=true;break;}
-    if(!allowed||libraryfs::exists(input/"ampr_assets.index")||libraryfs::exists(input/"ampr_emu.index"))return LibraryJson();
+    if(!allowed||libraryfs::exists(input/"ampr_assets.index"))return LibraryJson();
     auto metadata=input/"sce_sys/param.json";std::error_code ec;auto size=libraryfs::file_size(metadata,ec);if(ec||size>262144||!libraryfs::is_regular_file(input/"eboot.bin"))return LibraryJson();
     if(libraryfs::is_symlink(metadata)||libraryfs::is_symlink(input/"eboot.bin")||libraryfs::is_symlink(input/"sce_sys"))return LibraryJson();
     std::ifstream file(metadata);auto p=LibraryJson::parse(file,nullptr,false);if(p.is_discarded()||!p.is_object()||!p.contains("titleId")||!p["titleId"].is_string())return LibraryJson();

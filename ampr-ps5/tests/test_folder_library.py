@@ -10,7 +10,7 @@ with tempfile.TemporaryDirectory(prefix='lz4-folder-library-') as tmp:
         (folder/'sce_sys/param.json').write_text(json.dumps({'titleId':title,'localizedParameters':{'defaultLanguage':'en-US','en-US':{'titleName':'Folder fixture'}}}))
         if compressed:(folder/'ampr_assets.index').write_bytes(b'fixture')
         return folder
-    valid=game('game');nested=game('category/nested','PPSA00003')
+    valid=game('game');(valid/'ampr_emu.index').write_bytes(b'existing source index');nested=game('category/nested','PPSA00003')
     game('already-compressed',compressed=True);game('invalid','CUSA00002')
     bad=game('broken-json');(bad/'sce_sys/param.json').write_text('{')
     missing=game('no-eboot');(missing/'eboot.bin').unlink()
@@ -20,4 +20,4 @@ with tempfile.TemporaryDirectory(prefix='lz4-folder-library-') as tmp:
     found=json.loads(result.stdout)
     assert {g['path'] for g in found}=={str(valid),str(nested)},found
     assert all(not g['image_backed'] and g['title_name']=='Folder fixture' for g in found)
-    print('PASS: folder discovery, nested dumps, localized names; compressed games, malformed metadata, missing executable and links excluded')
+    print('PASS: folder discovery with existing source index, nested dumps, localized names; compressed games, malformed metadata, missing executable and links excluded')
