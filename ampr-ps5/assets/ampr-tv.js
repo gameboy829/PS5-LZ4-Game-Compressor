@@ -4,7 +4,7 @@ function tvSwitch(screen){tvScreen=screen;for(const name of ['setup','progress']
 byId('setupTab').onclick=()=>tvSwitch('setup');byId('progressTab').onclick=()=>tvSwitch('progress');
 function tvOpen(id){tvReturnFocus=document.activeElement;const dialog=byId(id);dialog.showModal();dialog.querySelector('button').focus();}
 function tvClose(){const dialog=document.querySelector('dialog[open]');if(dialog){dialog.close();if(tvReturnFocus&&tvReturnFocus.getClientRects().length)tvReturnFocus.focus();}else{tvSwitch('setup');byId('setupTab').focus();byId('destinationSummary').textContent=byId('output').value||'A new game folder will be created automatically.';}}
-byId('paths').onclick=()=>{updateConversionOptions(false);updateOriginalMovePath();tvOpen('pathsDialog');};byId('savePaths').onclick=()=>{try{if(['move','swap'].includes(byId('originalAction').value))originalBackupPath();tvDestinationChanged(false);queueRequirements();tvClose();}catch(e){byId('originalMovePath').textContent=e.message;}};
+byId('paths').onclick=()=>{byId('pathsError').textContent='';updateConversionOptions(false);updateOriginalMovePath();tvOpen('pathsDialog');};byId('savePaths').onclick=()=>{try{syncDestinationFromFolder();if(['move','swap'].includes(byId('originalAction').value))originalBackupPath();tvDestinationChanged(false);queueRequirements();tvClose();}catch(e){byId('pathsError').textContent=e.message;}};
 byId('help').onclick=()=>tvOpen('helpDialog');document.querySelectorAll('[data-close]').forEach(button=>button.onclick=tvClose);
 function tvRenderStorage(){const box=byId('storage');box.replaceChildren();const pages=Math.max(1,Math.ceil(tvDevices.length/2));tvStoragePage=Math.min(tvStoragePage,pages-1);for(const device of tvDevices.slice(tvStoragePage*2,tvStoragePage*2+2)){const card=document.createElement('div');card.className='storage-card';const name=document.createElement('strong');name.textContent=device.name;const value=document.createElement('span');value.textContent=device.available?`${(device.freeBytes/1e9).toFixed(1)} GB free / ${(device.totalBytes/1e9).toFixed(1)} GB`: 'Unavailable';card.append(name,value);box.append(card);}byId('storagePage').textContent=`${tvStoragePage+1} / ${pages}`;byId('storagePrev').disabled=tvStoragePage===0;byId('storageNext').disabled=tvStoragePage>=pages-1;}
 function tvSetStorage(devices){
@@ -18,6 +18,14 @@ function tvSetStorage(devices){
     for(const device of usable)backup.add(new Option(device.name,device.path==='/data/homebrew'?'/data/game-backups':device.path==='/mnt/ext1/games'?'/mnt/ext1/game-backups':device.path+'/game-backups'));
     if([...backup.options].some(o=>o.value===chosen))backup.value=chosen;
     tvDestinationChanged(storage.value!==previous);updateOriginalMovePath();
+}
+function syncDestinationFromFolder(){
+    const path=byId('output').value.trim().replace(/\\/g,'/').replace(/\/+$/,'');
+    const storage=byId('destinationStorage');
+    const root=path.startsWith('/data/homebrew/')?'/data/homebrew':/^\/mnt\/ext1\/(games|homebrew|etaHEN\/games)\//.test(path)?'/mnt/ext1/games':path.match(/^\/mnt\/usb[0-7](?=\/)/)?.[0];
+    if(!root)throw new Error('Choose a new game folder under /data/homebrew, /mnt/ext1/homebrew, /mnt/ext1/games, or a connected USB drive.');
+    if(![...storage.options].some(option=>option.value===root))throw new Error('That storage drive is unavailable. Refresh space and check that the drive is connected.');
+    storage.value=root;byId('output').value=path;
 }
 function sourceDrive(){const path=selected()?.sourcePath||'';return path.startsWith('/data/')?'/data/homebrew':path.startsWith('/mnt/ext1/')?'/mnt/ext1/games':path.match(/^\/mnt\/usb[0-7](?=\/)/)?.[0]||'';}
 function tvDestinationChanged(reset=true){
