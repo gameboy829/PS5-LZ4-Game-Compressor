@@ -12,3 +12,5 @@
 *.zip
 ampr-ps5/standalone/assets.h
 ampr-ps5/standalone/launcher-assets.h
+
+ampr-ps5/standalone/update-ca.h

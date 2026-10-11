@@ -30,7 +30,7 @@ Keep ShadowMountPlus installed for image mounting and library refresh. Folder du
 
 ### Launching the compressor
 
-1. Load `LZ4-Game-Compressor-beta.2.elf` using Payload Manager.
+1. Load `LZ4-Game-Compressor.elf` using Payload Manager.
 2. Open the compressor interface in your browser at:
 
    `http://<PS5_IP>:5911/`

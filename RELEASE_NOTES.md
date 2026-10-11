@@ -1,25 +1,17 @@
-# LZ4 Game Compressor beta.2
+# LZ4 Game Compressor beta.3
 
-Compress supported PS5 games directly on your console into AMPR LZ4 asset packs. Level 7 and content verification remain the defaults.
+This release fixes the missing Media shortcut by using the newer PS5 app registration method. Registration was verified on firmware 12.20, and a user confirmed that the shortcut works after a clean installation. Other firmware versions still need confirmation.
 
-**Supported sources: this app can only convert mountable PS5 game images and extracted PS5 game folder dumps.** Images must be mountable by ShadowMountPlus. Folder dumps need the game's `eboot.bin`, `sce_sys/param.json`, and game files. Already converted AMPR folders are excluded from the source library.
+Download **LZ4-Game-Compressor.elf** and load it with Payload Manager after stopping any active conversion. This single payload starts the compressor and installs or refreshes its Media shortcut. Reload an open browser to see the updated interface. The shortcut opens the local interface; the payload must be running.
 
-## What's new and fixed
+Also included:
 
-- **One ELF to load:** `LZ4-Game-Compressor-beta.2.elf` starts the compressor and installs or refreshes its Media shortcut and logo.
-- **Folder dump support:** library entries show Image or Folder Dump. Dumps load automatically through a read-only view and display Folder Dump Loaded.
-- **Better game discovery:** USB and M.2 game folders are discovered, including dumps containing a source `ampr_emu.index`. Converted AMPR output is kept out of the source list.
-- **M.2 destinations:** use a PS5-recognized expansion SSD and choose custom destination folders, including `/mnt/ext1/homebrew`. Selecting a custom folder keeps the destination drive selection consistent.
-- **Shared browser settings:** game selection, mount state, destination folders, compression level, verification, and original-game options synchronize when using the same PS5 address on multiple devices.
-- **Complete remote progress:** opening the app during a conversion shows its current stage, game and file, speeds, elapsed time, estimated remaining time, and progress. Idle browsers continue checking for a conversion started elsewhere.
-- **Clearer speeds and cancellation:** transfer rates use storage units per second, and partial-output cleanup reports whether deletion succeeded.
+- **Updates** in the app: check GitHub releases and download, install, and restart a newer version. Downloads use HTTPS and SHA-256 verification. Release checking was tested on the PS5; a complete self-update between published versions has not yet been tested on-console.
+- Completed conversions stop the elapsed timer and show a completion message with the total duration.
+- The ELF filename stays the same across releases.
 
-## Before converting
+**Supported sources are mountable PS5 game images and extracted game folder dumps.** Images must be mountable by ShadowMountPlus; dumps need `eboot.bin`, `sce_sys/param.json`, and the game files. Level 7 and verification remain the defaults.
 
-Keep both copies and leave verification enabled when trying a game for the first time. Folder dumps currently support Keep both; original-image move, delete, and swap options remain available for image sources. Verification checks content integrity and does not guarantee that a game will launch or play correctly. Deleting an original is permanent, and interrupted transfers may leave folders that need review.
+This fix addresses shortcut registration. It does not claim to fix the separate folder-loading or connection-loss reports. This is beta software: keep your original game when trying a conversion for the first time. Content verification does not guarantee that every game will launch correctly.
 
-Load the new ELF with Payload Manager after stopping any active conversion. The Media shortcut opens the interface; the payload must be running. If a browser still shows the old interface, reload it.
-
-**This is a beta release.** If you encounter any bugs or unexpected behavior, please let me know so I can investigate and improve future releases.
-
-Licensed dependencies and acknowledgments are included in the source archive, CREDITS.md, and THIRD_PARTY_NOTICES.md. No game content or proprietary Sony SDK is included.
+Dependencies and credits are documented in the repository's CREDITS.md and THIRD_PARTY_NOTICES.md. No game content or proprietary Sony SDK is included.

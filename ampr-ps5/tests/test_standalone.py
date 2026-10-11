@@ -30,7 +30,7 @@ try:
     else:raise AssertionError('Service did not start')
     assert request('/')[0]==200
     assert b'Controller' in request('/')[1]
-    assert b'beta.2' in request('/')[1] and b'Conversion options' in request('/')[1]
+    assert (root.parent/'VERSION').read_text().strip().split('-')[-1].encode() in request('/')[1] and b'Conversion options' in request('/')[1]
     assert api('/api/gc/games')['games'][0]['titleId']=='PPSA00001'
     query=urllib.parse.urlencode({'titleId':'PPSA00001','sourcePath':game['path'],'output':'/data/homebrew/fixture-output','level':'7','mode':'internal'})
     p=api('/api/gc/ampr-lz4/plan?'+query);assert not p['canStart'] and not p['readOnlyVerified']
@@ -52,6 +52,17 @@ try:
     api('/api/gc/job/cancel','GET',False)
     api('/api/gc/job/cancel','POST')
     assert not api('/api/gc/ampr-lz4/status')['active']
+    assert api('/api/gc/ampr-lz4/update')['currentVersion']==(root.parent/'VERSION').read_text().strip()
+    api('/api/gc/ampr-lz4/update/check','GET',False)
+    api('/api/gc/ampr-lz4/update/check','POST')
+    for _ in range(100):
+        update=api('/api/gc/ampr-lz4/update')
+        if not update['busy']:break
+        time.sleep(.01)
+    assert not update['busy'] and update['phase']=='error'
+    api('/api/gc/ampr-lz4/update/install','POST',False)
+    assert not api('/api/gc/ampr-lz4/update')['busy']
+    assert request('/update-helper.elf')[0]==404
     assert request('/ampr-runtime.sprx')[0]==404
     assert request('/../src/ampr_backend.cpp')[0]==404
     assert request('/api/nonexistent')[0]==400

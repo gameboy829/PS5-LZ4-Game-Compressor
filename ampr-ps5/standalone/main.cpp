@@ -5,6 +5,8 @@
 #include "thread.h"
 #include "library.h"
 #include "assets.h"
+#include "update_common.h"
+#include "https.h"
 #include "../src/ampr_backend.h"
 #include "../../ampr-native/third_party/config/json.hpp"
 #include <filesystem>
@@ -33,6 +35,7 @@ using namespace studio;
 static std::mutex control;
 static std::mutex stateLock;
 static std::atomic<bool> abortJob{false};
+static std::atomic<bool> updateBusy{false};
 #ifndef STUDIO_HOST_TEST
 extern "C" int sceSystemServiceGetAppIdOfRunningBigApp(void);
 extern "C" int sceSystemServiceGetAppTitleId(int,char*);
@@ -141,8 +144,12 @@ static J setupRoute(const Request&r){
     }
     return J{{"ok",true},{"revision",setupRevision},{"settings",sharedSetup}};
 }
+#include "updater.inc"
 static J route(const Request&r){
     auto path=r.path;bool mutation=r.method=="POST";require(mutation||r.method=="GET","Unsupported method");
+    if(path=="/api/gc/ampr-lz4/update")return updaterStatus();
+    if(path=="/api/gc/ampr-lz4/update/check"||path=="/api/gc/ampr-lz4/update/install"){require(mutation,"Use POST for updates");std::lock_guard<std::mutex> lock(control);{std::lock_guard<std::mutex> guard(stateLock);require(!state.value("active",false),"Wait for the conversion or performance test to finish before updating");}updateStart(path.find("/install")!=std::string::npos);return updaterStatus();}
+    if(updateBusy&&mutation)throw std::runtime_error("Wait for the update to finish");
     if(path=="/api/gc/ampr-lz4/setup")return setupRoute(r);
     if(path=="/api/gc/ampr-lz4/status")return status();
     if(path=="/api/control/handoff-state"){auto s=status();return J{{"ok",true},{"busy",s["active"]}};}
@@ -151,7 +158,7 @@ static J route(const Request&r){
     if(path=="/api/gc/games"){J games=J::array();for(auto& g:gameLibrary())games.push_back(J{{"name",g.value("title_name",g.value("title_id",""))},{"titleId",g.value("title_id","")},{"sourcePath",g.value("path","")},{"sourceStorage",storageName(g.value("path",std::string()))},{"sourceType",g.value("image_backed",false)?"image":"folder"},{"readOnlyVerified",g.value("mounted",false)&&readOnly(g.value("runtime_path",std::string()))}});return J{{"ok",true},{"games",games}};}
     if(path=="/api/gc/ampr-lz4/capacity"){J devices=J::array();for(int i=-2;i<8;i++){fs::path p=i==-2?"/data":i==-1?"/mnt/ext1":("/mnt/usb"+std::to_string(i));J d={{"name",i==-2?"Internal SSD":i==-1?"M.2 SSD":"USB "+std::to_string(i)},{"path",i==-2?"/data/homebrew":i==-1?"/mnt/ext1/games":p.string()},{"available",false},{"freeBytes",0},{"totalBytes",0}};struct statvfs v{};if(fs::is_directory(p)&&statvfs(p.c_str(),&v)==0&&v.f_frsize&&v.f_blocks<=UINT64_MAX/v.f_frsize&&v.f_bavail<=UINT64_MAX/v.f_frsize){struct stat device{},parent{};bool mounted=i==-2||(stat(p.c_str(),&device)==0&&stat(p.parent_path().c_str(),&parent)==0&&device.st_dev!=parent.st_dev);d["available"]=mounted&&v.f_blocks>0&&!(v.f_flag&ST_RDONLY);d["freeBytes"]=uint64_t(v.f_bavail)*v.f_frsize;d["totalBytes"]=uint64_t(v.f_blocks)*v.f_frsize;}devices.push_back(d);}return J{{"ok",true},{"devices",devices}};}
     if(path=="/api/gc/ampr-lz4/size"){auto g=findGame(r);auto root=g.value("runtime_path","");require(g.value("mounted",false)&&readOnly(root),"Mount the source read-only first");uint64_t n=0,b=0;char error[1024]={};int rc=ampr_backend_measure(root.c_str(),&n,&b,error,sizeof(error));require(rc==0,error);return J{{"ok",true},{"logicalBytes",n},{"requiredOutputBytes",b}};}
-    std::lock_guard<std::mutex> operation(control);bool active;{std::lock_guard<std::mutex> guard(stateLock);active=state.value("active",false);}require(!active,"Wait until the current job finishes");
+    std::lock_guard<std::mutex> operation(control);require(!updateBusy,"Wait for the update to finish");bool active;{std::lock_guard<std::mutex> guard(stateLock);active=state.value("active",false);}require(!active,"Wait until the current job finishes");
     if(path=="/api/gc/ampr-lz4/mount"){require(mutation,"Use POST to mount");require(!gameRunning(),"Close the running game before changing mounts");auto selected=findGame(r);releaseFolderView(AMPR_STATE_ROOT);J listing=J::array();try{listing=shadow("games").at("games");}catch(const std::exception&){require(!selected.value("image_backed",false),"ShadowMount is unavailable");}for(auto& g:listing)if(g.value("managed",false)&&g.value("mounted",false))shadow("games/unmount",J{{"title_id",g.at("title_id")}});if(selected.value("image_backed",false))shadow("games/mount",J{{"title_id",selected.at("title_id")},{"mode","ro"}});else mountFolderView(AMPR_STATE_ROOT,selected.at("path").get<std::string>());return J{{"ok",true},{"message","Source mount prepared. Read-only verification follows."}};}
     if(path=="/api/gc/ampr-lz4/plan")return plan(r);
     if(path=="/api/gc/ampr-lz4/start"||path=="/api/gc/ampr-lz4/benchmark"){require(mutation,"Use POST to start");launch(r,path=="/api/gc/ampr-lz4/benchmark");return J{{"ok",true},{"message","Started"}};}
@@ -160,12 +167,12 @@ static J route(const Request&r){
     if(path=="/api/gc/ampr-lz4/benchmark/apply"){require(mutation,"Use POST to apply settings");char output[32768]={};int rc=ampr_backend_benchmark_apply(get(r,"id").c_str(),output,sizeof(output));require(rc==0,output);auto j=J::parse(output);j["ok"]=true;return j;}
     throw std::runtime_error("Unknown endpoint");
 }
-static void handle(int fd){Socket client(fd);timeout(fd,15);try{auto request=parse(receive(fd,16384));if(request.path=="/api/gc/ampr-lz4/log"){require(request.method=="GET","Use GET for logs");std::string tail;{std::lock_guard<std::mutex> guard(stateLock);tail=logTail;}respond(fd,200,tail,"text/plain; charset=utf-8");return;}if(request.path.rfind("/api/",0)==0){respond(fd,200,route(request).dump());return;}require(request.method=="GET","Use GET for assets");auto path=request.path=="/"?"/ampr-studio.html":request.path;for(auto& a:embeddedAssets){if(path=="/"+std::string(a.name)&&std::string(a.name)!="ampr-runtime.sprx"){respond(fd,200,std::string(reinterpret_cast<const char*>(a.data),a.size),a.mime);return;}}respond(fd,404,J{{"ok",false},{"error","Not found"}}.dump());}catch(const std::exception&e){try{respond(fd,400,J{{"ok",false},{"error",e.what()}}.dump());}catch(...){}}}
+static void handle(int fd){Socket client(fd);timeout(fd,15);try{auto request=parse(receive(fd,16384));if(request.path=="/api/gc/ampr-lz4/log"){require(request.method=="GET","Use GET for logs");std::string tail;{std::lock_guard<std::mutex> guard(stateLock);tail=logTail;}respond(fd,200,tail,"text/plain; charset=utf-8");return;}if(request.path.rfind("/api/",0)==0){respond(fd,200,route(request).dump());return;}require(request.method=="GET","Use GET for assets");auto path=request.path=="/"?"/ampr-studio.html":request.path;for(auto& a:embeddedAssets){if(path=="/"+std::string(a.name)&&std::string(a.name)!="ampr-runtime.sprx"&&std::string(a.name)!="update-helper.elf"){respond(fd,200,std::string(reinterpret_cast<const char*>(a.data),a.size),a.mime);return;}}respond(fd,404,J{{"ok",false},{"error","Not found"}}.dump());}catch(const std::exception&e){try{respond(fd,400,J{{"ok",false},{"error",e.what()}}.dump());}catch(...){}}}
 #ifndef STUDIO_HOST_TEST
 int installMediaShortcut();
 #endif
 int main(){signal(SIGPIPE,SIG_IGN);try{
-    fs::create_directories(fs::path(AMPR_STATE_ROOT)/"logs");for(auto& a:embeddedAssets){if(std::string(a.name)=="ampr-runtime.sprx"){auto path=fs::path(AMPR_STATE_ROOT)/"libSceAmpr.sprx";std::ofstream f(path,std::ios::binary|std::ios::trunc);f.write(reinterpret_cast<const char*>(a.data),a.size);f.flush();require(bool(f),"Cannot install AMPR runtime");require(chmod(path.c_str(),0644)==0,"Cannot set runtime permissions");}}
+    fs::create_directories(fs::path(AMPR_STATE_ROOT)/"logs");auto saved=fs::path(AMPR_STATE_ROOT)/"shared-setup.json";if(fs::is_regular_file(saved)){auto setup=J::parse(updates::read(saved),nullptr,false);if(setup.is_object()){sharedSetup=setup;++setupRevision;}}for(auto& a:embeddedAssets){if(std::string(a.name)=="ampr-runtime.sprx"){auto path=fs::path(AMPR_STATE_ROOT)/"libSceAmpr.sprx";std::ofstream f(path,std::ios::binary|std::ios::trunc);f.write(reinterpret_cast<const char*>(a.data),a.size);f.flush();require(bool(f),"Cannot install AMPR runtime");require(chmod(path.c_str(),0644)==0,"Cannot set runtime permissions");}}
     Socket server(socket(AF_INET,SOCK_STREAM,0));require(server.fd>=0,"Cannot create service socket");int one=1;setsockopt(server.fd,SOL_SOCKET,SO_REUSEADDR,&one,sizeof(one));sockaddr_in address{};address.sin_family=AF_INET;address.sin_port=htons(STUDIO_PORT);address.sin_addr.s_addr=htonl(INADDR_ANY);require(bind(server.fd,reinterpret_cast<sockaddr*>(&address),sizeof(address))==0,"Port is already in use");require(listen(server.fd,16)==0,"Cannot listen");
 #ifndef STUDIO_HOST_TEST
     if(installMediaShortcut())appendLog("WARNING: Media shortcut installation failed. See /data/AMPRStudio/launcher-install.log. The compressor is still available in the browser.\n");

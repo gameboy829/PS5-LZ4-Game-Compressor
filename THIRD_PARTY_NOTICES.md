@@ -112,3 +112,7 @@ Additional notices for incorporated components remain in the supplied JSON and T
 The PS5 payload SDK is an open homebrew toolchain; its GPL license and individual component licenses apply. SDK source: https://github.com/ps5-payload-dev/sdk . The proprietary Sony SDK is not supplied. ShadowMountPlus and Payload Manager are external services, not bundled application sources.
 
 See CREDITS.md and docs/PROVENANCE.md for attribution and implementation provenance.
+
+## Update HTTPS trust certificates
+
+`ampr-ps5/assets/github-ca.pem` contains the public Mozilla CA trust certificates distributed by [curl CA Extract](https://curl.se/docs/caextract.html). These are certificate data, not third-party application code. The updater loads these roots without disabling certificate verification.
