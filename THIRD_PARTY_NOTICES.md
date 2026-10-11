@@ -116,3 +116,5 @@ See CREDITS.md and docs/PROVENANCE.md for attribution and implementation provena
 ## Update HTTPS trust certificates
 
 `ampr-ps5/assets/github-ca.pem` contains the public Mozilla CA trust certificates distributed by [curl CA Extract](https://curl.se/docs/caextract.html). These are certificate data, not third-party application code. The updater loads these roots without disabling certificate verification.
+
+The bundle also includes Let's Encrypt's ISRG Root YR cross-signed certificate from https://letsencrypt.org/certs/gen-y/root-yr-by-x1.pem to support the GitHub download certificate chain on the console. Certificate validation remains enabled.

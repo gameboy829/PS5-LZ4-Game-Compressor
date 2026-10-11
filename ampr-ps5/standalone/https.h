@@ -13,13 +13,13 @@ int sceHttpInit(int,int,size_t);int sceHttpTerm(int);
 int sceHttpCreateTemplate(int,const char*,int,int);int sceHttpDeleteTemplate(int);
 int sceHttpCreateConnectionWithURL(int,const char*,int);int sceHttpDeleteConnection(int);
 int sceHttpCreateRequestWithURL(int,int,const char*,uint64_t);int sceHttpDeleteRequest(int);
-int sceHttpSetAutoRedirect(int,int);int sceHttpSetConnectTimeOut(int,uint32_t);int sceHttpSetRecvTimeOut(int,uint32_t);int sceHttpSetSendTimeOut(int,uint32_t);
+int sceHttpSetResponseHeaderMaxSize(int,size_t);int sceHttpSetAutoRedirect(int,int);int sceHttpSetConnectTimeOut(int,uint32_t);int sceHttpSetRecvTimeOut(int,uint32_t);int sceHttpSetSendTimeOut(int,uint32_t);
 int sceHttpsLoadCert(int,int,const UpdateCa**,const UpdateCa*,const UpdateCa*);
-int sceHttpSendRequest(int,const void*,size_t);int sceHttpGetStatusCode(int,int*);int sceHttpReadData(int,void*,size_t);
+int sceHttpGetAllResponseHeaders(int,char**,size_t*);int sceHttpSendRequest(int,const void*,size_t);int sceHttpGetStatusCode(int,int*);int sceHttpReadData(int,void*,size_t);
 }
 #endif
 namespace updates {
-inline std::string download(const std::string& url,size_t limit,const std::function<void(size_t)>& progress={}){
+inline std::string download(const std::string& url,size_t limit,const std::function<void(size_t)>& progress={},unsigned redirects=0){
  studio::require(url.rfind("https://",0)==0,"Updates require HTTPS");
 #ifdef STUDIO_HOST_TEST
  throw std::runtime_error("Console HTTPS is unavailable in host tests");
@@ -31,12 +31,19 @@ inline std::string download(const std::string& url,size_t limit,const std::funct
  std::vector<const UpdateCa*> roots;for(const auto& cert:updateCas)roots.push_back(&cert);
  int certResult=sceHttpsLoadCert(c.http,int(roots.size()),roots.data(),nullptr,nullptr);char certError[96];snprintf(certError,sizeof(certError),"Cannot load update certificate authorities (0x%08x)",unsigned(certResult));studio::require(certResult==0,certError);
  c.tmpl=sceHttpCreateTemplate(c.http,"LZ4-Game-Compressor-Updater",2,1);studio::require(c.tmpl>=0,"Cannot create HTTPS template");
- studio::require(sceHttpSetAutoRedirect(c.tmpl,1)==0,"Cannot enable GitHub redirects");
+ studio::require(sceHttpSetResponseHeaderMaxSize(c.tmpl,64*1024)==0,"Cannot set update response header limit");
+ studio::require(sceHttpSetAutoRedirect(c.tmpl,0)==0,"Cannot enable GitHub redirects");
  studio::require(sceHttpSetConnectTimeOut(c.tmpl,15000000)==0&&sceHttpSetRecvTimeOut(c.tmpl,30000000)==0&&sceHttpSetSendTimeOut(c.tmpl,30000000)==0,"Cannot set update timeouts");
  c.conn=sceHttpCreateConnectionWithURL(c.tmpl,url.c_str(),0);studio::require(c.conn>=0,"Cannot create HTTPS connection");
  c.req=sceHttpCreateRequestWithURL(c.conn,0,url.c_str(),0);studio::require(c.req>=0,"Cannot create update request");
  int sent=sceHttpSendRequest(c.req,nullptr,0);char error[96];snprintf(error,sizeof(error),"GitHub request failed (0x%08x); check internet access",unsigned(sent));studio::require(sent==0,error);
- int code=0;studio::require(sceHttpGetStatusCode(c.req,&code)==0&&code==200,"GitHub returned HTTP "+std::to_string(code));
+ int code=0;studio::require(sceHttpGetStatusCode(c.req,&code)==0,"Cannot read GitHub response status");
+ if(code==301||code==302||code==303||code==307||code==308){
+  studio::require(redirects<5,"Too many update redirects");char* headers=nullptr;size_t bytes=0;studio::require(sceHttpGetAllResponseHeaders(c.req,&headers,&bytes)==0&&headers,"Cannot read update redirect");std::string text(headers,bytes),location;size_t start=0;
+  while(start<text.size()){auto end=text.find('\n',start);auto line=text.substr(start,end==std::string::npos?end:end-start);auto colon=line.find(':');if(colon!=std::string::npos){auto name=line.substr(0,colon);for(auto& ch:name)ch=char(tolower((unsigned char)ch));if(name=="location"){location=line.substr(colon+1);while(!location.empty()&&(location.front()==' '||location.front()=='\t'))location.erase(0,1);while(!location.empty()&&(location.back()=='\r'||location.back()=='\n'))location.pop_back();break;}}if(end==std::string::npos)break;start=end+1;}
+  bool allowed=false;for(auto host:{"github.com","release-assets.githubusercontent.com","objects.githubusercontent.com"})if(location.rfind(std::string("https://")+host+"/",0)==0)allowed=true;studio::require(allowed,"Unexpected update redirect destination");return download(location,limit,progress,redirects+1);
+ }
+ studio::require(code==200,"GitHub returned HTTP "+std::to_string(code));
  std::string data;char buffer[32768];for(;;){int n=sceHttpReadData(c.req,buffer,sizeof(buffer));studio::require(n>=0,"Update download interrupted");if(!n)break;studio::require(data.size()+size_t(n)<=limit,"Update response exceeds limit");data.append(buffer,size_t(n));if(progress)progress(data.size());}return data;
 #endif
 }

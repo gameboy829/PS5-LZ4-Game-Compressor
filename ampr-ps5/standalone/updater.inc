@@ -19,7 +19,7 @@ static void updateStart(bool install){
    updates::atomicWrite(fs::path(updates::folder)/"previous.elf",updates::read(updates::payload),0755);
    updates::atomicWrite(updates::payload,data,0755);replaced=true;
    const EmbeddedAsset* helper=nullptr;for(const auto& a:embeddedAssets)if(std::string(a.name)=="update-helper.elf")helper=&a;require(helper,"Restart helper is unavailable");
-   auto helperPath=fs::path(updates::folder)/"restart.elf";updates::atomicWrite(helperPath,std::string(reinterpret_cast<const char*>(helper->data),helper->size),0755);
+   auto helperPath=fs::path(updates::payload).parent_path()/"update-helper.elf";updates::atomicWrite(helperPath,std::string(reinterpret_cast<const char*>(helper->data),helper->size),0755);
    updates::atomicWrite(fs::path(updates::folder)/"handoff.json",J{{"payload",updates::payload},{"version",release.at("version")}}.dump());
    updates::atomicWrite(fs::path(updates::folder)/"result.json",J{{"phase","restarting"},{"message","Restarting the app..."}}.dump());
    auto response=getLoopback(8084,"/loadpayload:"+helperPath.string());require(response.first.find(" 200 ")!=std::string::npos&&response.body.find("OK")!=std::string::npos,"Payload Manager could not start restart helper");

@@ -6,9 +6,10 @@ Download **LZ4-Game-Compressor.elf** and load it with Payload Manager after stop
 
 Also included:
 
-- **Updates** in the app: check GitHub releases and download, install, and restart a newer version. Downloads use HTTPS and SHA-256 verification. Release checking was tested on the PS5; a complete self-update between published versions has not yet been tested on-console.
+- **Updates** in the app: check GitHub releases and download, install, and restart a newer version. Downloads use HTTPS and SHA-256 verification. The complete download, verification, installation, and restart sequence was tested on a PS5.
 - Completed conversions stop the elapsed timer and show a completion message with the total duration.
-- The ELF filename stays the same across releases.
+- The ELF filename stays the same across releases, and the Media shortcut is named **LZ4 Game Compressor**.
+- Updated beta.3 download: fixes GitHub download header limits, certificate-chain compatibility, and the restart-helper location. If the previous in-app updater fails, load this ELF manually once. Existing beta.3 installations will not detect another beta.3 build as a newer version.
 
 **Supported sources are mountable PS5 game images and extracted game folder dumps.** Images must be mountable by ShadowMountPlus; dumps need `eboot.bin`, `sce_sys/param.json`, and the game files. Level 7 and verification remain the defaults.
 
