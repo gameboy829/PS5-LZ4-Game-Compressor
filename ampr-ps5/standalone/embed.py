@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 import pathlib, mimetypes
 root=pathlib.Path(__file__).resolve().parent.parent
-names=('ampr-studio.html','ampr-studio.css','ampr-studio.js','ampr-tv.js','ampr-progress.js','ampr-diagnostics.js','lz4-logo.svg','ampr-runtime.sprx')
+names=('ampr-studio.html','ampr-studio.css','ampr-studio.js','ampr-tv.js','ampr-sync.js','ampr-progress.js','ampr-diagnostics.js','lz4-logo.svg','ampr-runtime.sprx')
 lines=['// Generated from application assets.','struct EmbeddedAsset {const char* name;const char* mime;const unsigned char* data;size_t size;};']
 for i,name in enumerate(names):
     data=(root/'assets'/name).read_bytes()

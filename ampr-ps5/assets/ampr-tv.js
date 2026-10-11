@@ -77,7 +77,7 @@ let tvLastAction='',tvLastTime=0;function tvGamepad(){if(!document.hidden&&navig
 document.addEventListener('focusin',()=>{document.querySelectorAll('.controller-focus').forEach(el=>el.classList.remove('controller-focus'));document.activeElement?.classList.add('controller-focus');});
 byId('setupTab').focus();byId('destinationSummary').textContent=byId('output').value||'A new game folder will be created automatically.';
 
-refreshSpace();byId('refresh').onclick().then(()=>{byId('destinationSummary').textContent=byId('output').value;poll();});
+refreshSpace();byId('refresh').onclick().then(async()=>{await sharedInitialize();byId('destinationSummary').textContent=byId('output').value;poll();});
 
 function tvSplitOptions(){for(const name of ['packing','loose','verification']){const select=byId(name+'Split');select.replaceChildren();for(let total=name==='packing'?4:3;total<=8;total++){for(let readers=1;readers<total-1;readers++){if(name==='packing'){for(let writers=1;writers<total-readers-1;writers++){const workers=total-1-readers-writers;if(workers<1)continue;select.add(new Option(`${total} total: ${readers} readers / ${workers} compressors / ${writers} writers / 1 coordinator`,`${readers},${workers},${writers}`));}}else{const other=total-1-readers;select.add(new Option(`${total} total: ${readers} readers / ${other} ${name==='loose'?'writers':'check workers'} / 1 coordinator`,`${readers},${other}`));}}}}}
 tvSplitOptions();

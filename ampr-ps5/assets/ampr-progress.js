@@ -21,10 +21,13 @@ function progressSummary(state){
     'Deleting original image':'Removing the original image as requested.',
     'Verifying internal copy':'Checking that the internal copy matches the USB output byte for byte.'
   };
+  state={...state,done:Number(state.done)||0,total:Number(state.total)||0,performance:state.performance?{...state.performance,readMiBps:Number(state.performance.readMiBps)||0,writeMiBps:Number(state.performance.writeMiBps)||0,workerUtilization:Number(state.performance.workerUtilization)||0}:null};
+  state={...state,done:Number(state.done)||0,total:Number(state.total)||0,performance:state.performance?{...state.performance,readMiBps:Number(state.performance.readMiBps)||0,writeMiBps:Number(state.performance.writeMiBps)||0,workerUtilization:Number(state.performance.workerUtilization)||0}:null};
   const bytes=state.progressUnit!=='files';const elapsed=state.stageElapsedSeconds||0;
   const rate=elapsed>0?state.done/elapsed:0;
   const amount=n=>bytes?`${(n/1073741824).toFixed(2)} GiB`:n.toLocaleString()+' files';
   let numbers=state.total?`${amount(state.done)} / ${amount(state.total)}${bytes&&rate>0?` · ${(rate/1048576).toFixed(1)} MiB/s`:''}`:(/original|ShadowMount/i.test(state.phase||'')?'Finishing this step…':'Discovering totals…');
+  if(!state.active&&state.started)numbers=state.result?'Conversion stopped.':'All game files processed.';
   let performance='';if(state.active&&state.phase==='Copying loose files'&&state.performance){const p=state.performance;performance=`Read ${p.readMiBps.toFixed(1)} MiB/s · Write ${p.writeMiBps.toFixed(1)} MiB/s · ${p.readers||0} readers + ${p.writers||0} writers + 1 coordinator`;}else if(state.active&&state.performance?.workers){const p=state.performance;performance=`Read ${p.readMiBps.toFixed(1)} MiB/s · Write ${p.writeMiBps.toFixed(1)} MiB/s · ${p.readers?`${p.readers} readers · `:""}${p.workers} ${state.phase==='Packing game files'?'compressors':'workers'} (${p.workerUtilization.toFixed(0)}% busy)${p.writers?` · ${p.writers} writers`:""} · 1 coordinator`;}
   let estimate='Estimating time remaining…';
   if(!state.active)estimate=state.started?(state.result?'Stopped with an error.':state.verificationSkipped?'Verification skipped. Output is unverified.':'All selected checks finished.'):'Ready';
