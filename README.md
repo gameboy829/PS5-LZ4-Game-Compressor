@@ -1,12 +1,18 @@
 # LZ4 Game Compressor
 
-**Beta 1 — On-console PS5 game compression**
+**Beta 2 — On-console PS5 game compression**
 
 <img src="logo.png" width="128" alt="LZ4 Game Compressor logo">
 
 LZ4 Game Compressor lets you compress your PS5 games directly on your console, helping reduce the space they occupy without having to transfer them to a PC or create a separate, fully extracted copy.
 
-It works alongside ShadowMountPlus to convert mounted games into AMPR LZ4 asset packs. Everything is managed through a browser-based interface that you can open on your PS5 or another device connected to the same local network.
+It converts supported PS5 game sources into AMPR LZ4 asset packs, using ShadowMountPlus to mount game images when needed. Everything is managed through a browser-based interface that you can open on your PS5 or another device connected to the same local network.
+
+## Supported sources
+
+**This app can only convert mountable PS5 game images and extracted PS5 game folder dumps.** Images must be mountable by ShadowMountPlus. A folder dump must contain the game's `eboot.bin`, `sce_sys/param.json`, and game files.
+
+Images are read through their mounted files; the compressor does not extract the image format itself. Folder dumps are loaded through a read-only view. Already converted AMPR folders are excluded from the source library.
 
 ## Getting started
 
@@ -17,14 +23,14 @@ Before starting, make sure you have:
 - A homebrew-enabled PS5
 - Payload Manager
 - ShadowMountPlus
-- A game image supported by ShadowMountPlus
+- A mountable game image supported by ShadowMountPlus, or an extracted PS5 game folder dump
 - Enough available storage for the converted game
 
-The compressor works with games mounted through ShadowMountPlus. It reads the mounted game files directly rather than extracting the original image format itself.
+Keep ShadowMountPlus installed for image mounting and library refresh. Folder dumps do not need an image mount.
 
 ### Launching the compressor
 
-1. Load `LZ4-Game-Compressor-beta.1.elf` using Payload Manager.
+1. Load `LZ4-Game-Compressor-beta.2.elf` using Payload Manager.
 2. Open the compressor interface in your browser at:
 
    `http://<PS5_IP>:5911/`
@@ -33,7 +39,7 @@ The compressor works with games mounted through ShadowMountPlus. It reads the mo
 
 3. Your game library should appear in the interface, ready for you to select a game.
 
-You can also access the interface using the **Media shortcut** on your PS5. Keep in mind that the shortcut only opens the interface; the compressor payload must already be running.
+The same ELF installs or refreshes the app icon and **Media shortcut** on your PS5, so no separate shortcut installer is needed. You can also access the interface using that shortcut. Keep in mind that the shortcut only opens the interface; the compressor payload must already be running.
 
 ## Compressing a game
 
@@ -41,13 +47,13 @@ The conversion process is designed to be straightforward, with most settings han
 
 ### 1. Select your game
 
-Find the game you want to compress in your library. Each entry shows where its original image is stored, including the drive and source path.
+Find the game you want to compress in your library. Each entry is labeled **Image** or **Folder Dump** and shows its drive and source path.
 
-Make sure no game is currently running, then select your game and choose **Mount game**.
+Make sure no game is currently running. For an image, select **Mount game**. A folder dump loads automatically; the disabled button then reads **Folder Dump Loaded**.
 
 ### 2. Choose where to save it
 
-Select the internal SSD or a connected USB storage device as your conversion destination.
+Select the internal SSD, an available M.2 expansion SSD, or a connected USB storage device as your conversion destination. An M.2 drive must already be recognized and mounted by the PS5. Custom folders such as `/mnt/ext1/homebrew` can be selected under **Destination folders**.
 
 You can customize the exact folder locations by expanding **Destination folders**. The compressor automatically checks whether your selected drives have enough free space before allowing the conversion to start.
 
@@ -81,6 +87,12 @@ Once conversion finishes, your compressed game will be saved to the selected loc
 
 If you enabled **Restart ShadowMount after conversion**, the compressor will also restart ShadowMount to refresh its game library.
 
+## Using the app from more than one device
+
+Open the same PS5 IP address and port on each device. Game selection, destination folders, compression level, verification choices, original-game options, and mount state stay synchronized between browsers.
+
+A conversion keeps running on the console when you close a browser. Opening the interface on another device shows the current stage, game, file, transfer speeds, elapsed time, estimated remaining time, and progress. Setup and Progress tab selection stays local to each browser.
+
 ## Managing your original games
 
 You don't necessarily have to keep two copies of every game. The compressor provides several options for organizing your storage after a successful conversion.
@@ -91,6 +103,8 @@ You don't necessarily have to keep two copies of every game. The compressor prov
 | **Delete original** | The original is permanently removed once the selected conversion checks have completed successfully. You'll be asked to confirm this choice. |
 | **Move original** | The original game is moved to another folder or drive after conversion. |
 | **Swap original and converted** | The compressed game takes the original game's place, while the original is relocated to the destination drive. |
+
+Folder dumps currently use **Keep both**. Moving, deleting, and swapping the original are available for image sources.
 
 ### Moving games between drives
 

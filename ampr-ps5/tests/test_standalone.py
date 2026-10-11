@@ -30,7 +30,7 @@ try:
     else:raise AssertionError('Service did not start')
     assert request('/')[0]==200
     assert b'Controller' in request('/')[1]
-    assert b'beta.1' in request('/')[1] and b'Conversion options' in request('/')[1]
+    assert b'beta.2' in request('/')[1] and b'Conversion options' in request('/')[1]
     assert api('/api/gc/games')['games'][0]['titleId']=='PPSA00001'
     query=urllib.parse.urlencode({'titleId':'PPSA00001','sourcePath':game['path'],'output':'/data/homebrew/fixture-output','level':'7','mode':'internal'})
     p=api('/api/gc/ampr-lz4/plan?'+query);assert not p['canStart'] and not p['readOnlyVerified']
