@@ -29,7 +29,7 @@ try:
         except (OSError,urllib.error.URLError):time.sleep(.05)
     else:raise AssertionError('Service did not start')
     diagnostic=api('/api/gc/ampr-lz4/report');assert diagnostic['schema']==1 and 'job' in diagnostic and 'logs' in diagnostic
-    assert 'launcher-install.log' in diagnostic['logs']
+    assert 'launcher-install.log' in diagnostic['logs'] and 'shadowmount/debug.log' in diagnostic['logs']
     api('/api/gc/ampr-lz4/report','POST',False)
     assert request('/')[0]==200
     assert b'Controller' in request('/')[1]

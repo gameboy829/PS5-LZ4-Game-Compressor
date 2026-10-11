@@ -1,11 +1,9 @@
-# LZ4 Game Compressor beta.6
+# LZ4 Game Compressor beta.7
 
-Fixes private diagnostic reports incorrectly rejecting a successful console response as “HTTP 200”. Reports now include firmware, saved job state, setup and available console logs alongside the existing tab images, games, storage and settings.
+Private reports now include ShadowMount’s debug log when available, alongside the compressor diagnostics and app tab images. This helps investigate game-launch and mount failures.
 
-Missing send requirements are highlighted in the report form. Successful submission closes the form and shows a clear Report sent confirmation with its report ID.
+The app reads /data/shadowmount/debug.log only; it does not enable logging or change ShadowMount settings. The report review includes its contents, availability, original size and whether it was truncated. Large logs include the last 1 MiB. Reports can include game names, paths and crash details and require your consent before sending privately.
 
-Update through Updates → Check for updates → Install and restart, then submit a new report. Previously submitted reports cannot recover the missing console data.
+Update through Updates → Check for updates → Install and restart. After reproducing a problem, use Report issue to submit a fresh report.
 
-This beta converts only mountable PS5 game images and extracted game folder dumps. Keep backups; verification does not guarantee launch compatibility. Reports require consent and remain private. Large logs include their last 1 MiB and are marked if truncated.
-
-The app checks for updates shortly after opening and every 10 minutes while idle. The Updates button pulses when a newer release is available. Download percentage, downloaded size, restart and successful installation are shown clearly. Updates still require you to choose Install and restart.
+This beta converts only mountable PS5 game images and extracted folder dumps. Keep backups; verification does not guarantee launch compatibility.
