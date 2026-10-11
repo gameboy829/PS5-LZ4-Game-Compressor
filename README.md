@@ -1,55 +1,170 @@
-# LZ4 Game Compressor — beta.1
+# LZ4 Game Compressor
+
+**Beta 1 — On-console PS5 game compression**
 
 <img src="logo.png" width="128" alt="LZ4 Game Compressor logo">
 
-Convert mounted PS5 games into AMPR LZ4 asset packs directly on the console, without creating a full extracted copy first. Use the browser interface with a controller or another device on your local network.
+LZ4 Game Compressor lets you compress your PS5 games directly on your console, helping reduce the space they occupy without having to transfer them to a PC or create a separate, fully extracted copy.
 
-## Compression features
+It works alongside ShadowMountPlus to convert mounted games into AMPR LZ4 asset packs. Everything is managed through a browser-based interface that you can open on your PS5 or another device connected to the same local network.
 
-- LZ4 HC compression, with level **7** as the default.
-- Internal SSD or USB destinations, with automatic space checks.
-- Game library entries show the original image's drive and source path.
-- Progress, speed, and time estimates for only the selected conversion steps.
-- Multithreaded conversion, limited to eight pipeline threads including the coordinator.
-- Required loose-file copying, AMPR runtime installation, and game-readable permissions.
-- Content verification enabled by default; skipped verification marks output **Unverified**.
-- Keep, move, delete, or swap the original and converted games.
-- All folder choices under **Destination folders**.
-- Optional **Restart ShadowMount after conversion** to refresh its game library.
-- Cancel a conversion and choose whether to delete its partial output.
+## Getting started
 
-## Requirements and use
+### What you'll need
 
-Requires a homebrew-enabled PS5, Payload Manager, and ShadowMountPlus. The source image must be supported by ShadowMountPlus and mounted read-only. The compressor reads its mounted filesystem; it does not unpack image formats itself.
+Before starting, make sure you have:
 
-1. Load `LZ4-Game-Compressor-beta.1.elf` through Payload Manager.
-2. Open `http://<PS5_IP>:5911/` in a browser. The Media shortcut opens this interface and requires the payload to be running.
-3. Close any running game, select the original game, and press **Mount game**.
-4. Choose destination storage and what to do with the original.
-5. Review locations under **Destination folders**. Space checks run automatically.
-6. Leave verification enabled and press **Start conversion**. Missing requirements appear below the button.
+- A homebrew-enabled PS5
+- Payload Manager
+- ShadowMountPlus
+- A game image supported by ShadowMountPlus
+- Enough available storage for the converted game
 
-## Original game choices
+The compressor works with games mounted through ShadowMountPlus. It reads the mounted game files directly rather than extracting the original image format itself.
 
-| Choice | After successful conversion |
-| --- | --- |
-| **Keep both** | Leave the original where it is. |
-| **Delete original** | Delete the original after selected checks finish. Confirmation is required. |
-| **Move original** | Move it to the selected **Original Game Folder**. Cross-drive moves copy and verify it before removing the old file. |
-| **Swap original and converted** | Return the verified converted game to the original drive, move and verify the original on the destination drive, then remove the temporary converted copy. |
+### Launching the compressor
 
-Swap is available only when the original and conversion destination are on different drives. Full conversion and returned-copy verification are required. Both drives need space for temporary copies. Swapping is not atomic; completed copies are retained if the operation fails or is canceled.
+1. Load `LZ4-Game-Compressor-beta.1.elf` using Payload Manager.
+2. Open the compressor interface in your browser at:
 
-**Converted Game Folder** is always available. **Original Game Folder** is enabled for moving or swapping. Swap also enables a final converted-game folder on the original drive. The original is unmounted before moving or deleting it. Failed conversion does not trigger original-file actions.
+   `http://<PS5_IP>:5911/`
 
-## Beta notice
+   Replace `<PS5_IP>` with your console's local IP address.
 
-Experimental software: game compatibility, compression ratio, speed, and recovery are not guaranteed. Keep independent backups until the converted game launches and plays correctly. Verification establishes data integrity, not game compatibility.
+3. Your game library should appear in the interface, ready for you to select a game.
 
-Deleting the original is permanent. Skipping verification and deleting it can leave you without a usable copy. Failed or canceled jobs can leave partial or completed folders; review reported locations before retrying. The Media shortcut does not start the payload itself.
+You can also access the interface using the **Media shortcut** on your PS5. Keep in mind that the shortcut only opens the interface; the compressor payload must already be running.
 
-## License and credits
+## Compressing a game
 
-Distributed under **GPL-3.0-or-later**, with licensed AMPR format/runtime and packing code from [ampr_emu](https://github.com/drakmor/ampr_emu). LZ4, PicoSHA2, nlohmann/json, and toml++ retain their own licenses and notices.
+The conversion process is designed to be straightforward, with most settings handled automatically.
 
-See [CREDITS.md](CREDITS.md), [LICENSE](LICENSE), [source provenance](docs/PROVENANCE.md), and [build instructions](docs/BUILD.md). Preserve license notices and provide corresponding source with binary distribution as required by the licenses. No game content or proprietary Sony SDK is supplied.
+### 1. Select your game
+
+Find the game you want to compress in your library. Each entry shows where its original image is stored, including the drive and source path.
+
+Make sure no game is currently running, then select your game and choose **Mount game**.
+
+### 2. Choose where to save it
+
+Select the internal SSD or a connected USB storage device as your conversion destination.
+
+You can customize the exact folder locations by expanding **Destination folders**. The compressor automatically checks whether your selected drives have enough free space before allowing the conversion to start.
+
+### 3. Decide what happens to the original
+
+You can keep the original game, delete it after conversion, move it somewhere else, or exchange its location with the compressed version.
+
+If you're trying the compressor for the first time, **Keep both** is the safest choice. This lets you test the compressed game before deciding whether to remove the original.
+
+See [Managing your original games](#managing-your-original-games) for more information about each option.
+
+### 4. Start the conversion
+
+Once everything is configured, select **Start conversion**.
+
+The compressor will take care of the required file copying, LZ4 compression, AMPR runtime installation, and game-readable permissions.
+
+You can follow the progress in real time, including conversion speed and estimated remaining time. These estimates reflect the steps selected for your particular conversion.
+
+If something needs attention before starting, the interface will explain what's missing beneath the Start conversion button.
+
+### 5. Verify and finish
+
+**Content verification is enabled by default**, and it's recommended to leave it on.
+
+Verification checks the converted content for data integrity before the compressor performs any requested operations on the original game.
+
+You can skip verification, but the resulting game will be marked **Unverified**. A successful verification doesn't necessarily mean the game will launch or function correctly, so it's worth testing the converted game yourself.
+
+Once conversion finishes, your compressed game will be saved to the selected location.
+
+If you enabled **Restart ShadowMount after conversion**, the compressor will also restart ShadowMount to refresh its game library.
+
+## Managing your original games
+
+You don't necessarily have to keep two copies of every game. The compressor provides several options for organizing your storage after a successful conversion.
+
+| Option | What happens |
+|---|---|
+| **Keep both** | Your original game stays untouched, and the compressed game is saved to your chosen destination. |
+| **Delete original** | The original is permanently removed once the selected conversion checks have completed successfully. You'll be asked to confirm this choice. |
+| **Move original** | The original game is moved to another folder or drive after conversion. |
+| **Swap original and converted** | The compressed game takes the original game's place, while the original is relocated to the destination drive. |
+
+### Moving games between drives
+
+When moving an original game to another drive, the compressor copies and verifies it before removing the old file. This helps protect against data loss during transfers.
+
+The original game is unmounted before any operation that requires moving or deleting its image.
+
+### Swapping game locations
+
+The **Swap original and converted** option is useful when you want the compressed version to remain on your main game drive while keeping the original on another drive.
+
+For example, you could compress a game from your internal SSD to a USB drive, then swap their locations so the compressed game ends up on the internal SSD and the original moves to USB.
+
+Swapping is only available when the original and conversion destination are on different drives.
+
+Because the process temporarily requires additional copies, both drives must have sufficient free space. Full conversion and returned-copy verification are required.
+
+**Important:** Swapping is not an atomic operation. If it's interrupted, successfully copied files are preserved rather than automatically removed. You may need to review the resulting folders manually.
+
+### Customizing folders
+
+All folder settings are grouped under **Destination folders**:
+
+- **Converted Game Folder:** Where the new compressed game is initially saved.
+- **Original Game Folder:** Where the original is moved when using Move or Swap.
+- **Final Converted Game Folder:** Where the converted game is placed on the original drive when swapping.
+
+Only the folder options relevant to your selected operation are enabled.
+
+## Compression settings
+
+The compressor uses **LZ4 HC** compression, with level **7** selected by default.
+
+LZ4 is designed for fast decompression, making it suitable for game assets that need to be accessed while playing. Actual storage savings depend on the game and its contents.
+
+Conversions use a multithreaded pipeline with a maximum of eight threads, including the coordinator.
+
+Most users can leave the default compression and verification settings unchanged.
+
+## Canceling a conversion
+
+You can cancel a conversion while it's running.
+
+When canceling, the interface lets you choose whether to keep or delete the partially generated output. Keeping it may be useful for inspection, but an incomplete conversion should not be treated as a playable game.
+
+If a conversion fails, the compressor won't proceed with the selected move, delete, or swap operation on the original game.
+
+Failed or canceled jobs may still leave partial or completed folders behind. Check the locations reported by the interface before attempting another conversion.
+
+## Things to know
+
+LZ4 Game Compressor is currently **beta software**. Although it includes storage checks and content verification, there are a few things worth keeping in mind:
+
+- **Compression results vary.** Games containing already-compressed assets may see smaller reductions in size.
+- **Verification isn't a compatibility test.** A verified conversion can still encounter issues when launching or playing.
+- **Keep a backup when possible.** Especially when trying a game for the first time.
+- **Deleting is permanent.** If you choose to remove your original, make sure you're comfortable relying on the converted copy.
+- **Interrupted operations may need cleanup.** In particular, moving or swapping games between drives can leave extra copies if the process doesn't finish.
+
+For the safest experience, start with **Keep both**, leave verification enabled, and test your compressed game before deleting the original.
+
+## License and acknowledgments
+
+LZ4 Game Compressor is distributed under the **GPL-3.0-or-later** license.
+
+It incorporates licensed AMPR format, runtime, and packing code from [ampr_emu](https://github.com/drakmor/ampr_emu), along with third-party components including LZ4, PicoSHA2, nlohmann/json, and toml++.
+
+Additional information is available in:
+
+- [Credits and third-party acknowledgments](CREDITS.md)
+- [License](LICENSE)
+- [Source provenance](docs/PROVENANCE.md)
+- [Build instructions](docs/BUILD.md)
+
+When redistributing the application, preserve the applicable license notices and provide corresponding source code as required by the respective licenses.
+
+No game content or proprietary Sony SDK is included.
