@@ -9,7 +9,7 @@
 #include "launcher-assets.h"
 extern "C" int sceKernelLoadStartModule(const char*,size_t,const void*,unsigned,void*,int*);
 namespace fs=std::filesystem;
-int main(){FILE* log=fopen("/data/AMPRStudio/launcher-install.log","w");try{
+int installMediaShortcut(){fs::create_directories("/data/AMPRStudio");FILE* log=fopen("/data/AMPRStudio/launcher-install.log","w");try{
     fs::path folder="/user/app/LZGC50001/sce_sys";bool existing=false;
     if(fs::is_regular_file(folder/"param.json")){std::ifstream input(folder/"param.json");std::string text((std::istreambuf_iterator<char>(input)),{});existing=text.find("LZGC50001")!=std::string::npos&&text.find("http://127.0.0.1:5911/")!=std::string::npos;if(!existing)throw std::runtime_error("Existing shortcut identity changed; refusing overwrite");}
     fs::create_directories(folder);
@@ -19,3 +19,7 @@ int main(){FILE* log=fopen("/data/AMPRStudio/launcher-install.log","w");try{
     auto initialize=reinterpret_cast<int(*)()>(kernel_dynlib_dlsym(-1,module,"sceAppInstUtilInitialize"));auto install=reinterpret_cast<int(*)(const char*,const char*,void*)>(kernel_dynlib_dlsym(-1,module,"sceAppInstUtilAppInstallTitleDir"));auto terminate=reinterpret_cast<int(*)()>(kernel_dynlib_dlsym(-1,module,"sceAppInstUtilTerminate"));
     if(!initialize||!install||!terminate)throw std::runtime_error("Title registration unavailable");int result=initialize();if(result<0)throw std::runtime_error("Registration initialization failed");result=install("LZGC50001","/user/app/",nullptr);terminate();if(result<0)throw std::runtime_error("Registration failed: "+std::to_string(result));if(log){fprintf(log,"OK new shortcut registered\n");fclose(log);}return 0;
 }catch(const std::exception&e){if(log){fprintf(log,"ERROR %s\n",e.what());fclose(log);}return 1;}}
+
+#ifdef LZ4_SHORTCUT_ONLY
+int main(){return installMediaShortcut();}
+#endif

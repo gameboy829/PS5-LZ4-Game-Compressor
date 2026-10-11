@@ -145,9 +145,17 @@ static J route(const Request&r){
     throw std::runtime_error("Unknown endpoint");
 }
 static void handle(int fd){Socket client(fd);timeout(fd,15);try{auto request=parse(receive(fd,16384));if(request.path=="/api/gc/ampr-lz4/log"){require(request.method=="GET","Use GET for logs");std::string tail;{std::lock_guard<std::mutex> guard(stateLock);tail=logTail;}respond(fd,200,tail,"text/plain; charset=utf-8");return;}if(request.path.rfind("/api/",0)==0){respond(fd,200,route(request).dump());return;}require(request.method=="GET","Use GET for assets");auto path=request.path=="/"?"/ampr-studio.html":request.path;for(auto& a:embeddedAssets){if(path=="/"+std::string(a.name)&&std::string(a.name)!="ampr-runtime.sprx"){respond(fd,200,std::string(reinterpret_cast<const char*>(a.data),a.size),a.mime);return;}}respond(fd,404,J{{"ok",false},{"error","Not found"}}.dump());}catch(const std::exception&e){try{respond(fd,400,J{{"ok",false},{"error",e.what()}}.dump());}catch(...){}}}
+#ifndef STUDIO_HOST_TEST
+int installMediaShortcut();
+#endif
 int main(){signal(SIGPIPE,SIG_IGN);try{
     fs::create_directories(fs::path(AMPR_STATE_ROOT)/"logs");for(auto& a:embeddedAssets){if(std::string(a.name)=="ampr-runtime.sprx"){auto path=fs::path(AMPR_STATE_ROOT)/"libSceAmpr.sprx";std::ofstream f(path,std::ios::binary|std::ios::trunc);f.write(reinterpret_cast<const char*>(a.data),a.size);f.flush();require(bool(f),"Cannot install AMPR runtime");require(chmod(path.c_str(),0644)==0,"Cannot set runtime permissions");}}
-    Socket server(socket(AF_INET,SOCK_STREAM,0));require(server.fd>=0,"Cannot create service socket");int one=1;setsockopt(server.fd,SOL_SOCKET,SO_REUSEADDR,&one,sizeof(one));sockaddr_in address{};address.sin_family=AF_INET;address.sin_port=htons(STUDIO_PORT);address.sin_addr.s_addr=htonl(INADDR_ANY);require(bind(server.fd,reinterpret_cast<sockaddr*>(&address),sizeof(address))==0,"Port is already in use");require(listen(server.fd,16)==0,"Cannot listen");std::mutex lock;std::condition_variable available;std::deque<int> pending;
+    Socket server(socket(AF_INET,SOCK_STREAM,0));require(server.fd>=0,"Cannot create service socket");int one=1;setsockopt(server.fd,SOL_SOCKET,SO_REUSEADDR,&one,sizeof(one));sockaddr_in address{};address.sin_family=AF_INET;address.sin_port=htons(STUDIO_PORT);address.sin_addr.s_addr=htonl(INADDR_ANY);require(bind(server.fd,reinterpret_cast<sockaddr*>(&address),sizeof(address))==0,"Port is already in use");require(listen(server.fd,16)==0,"Cannot listen");
+#ifndef STUDIO_HOST_TEST
+    if(installMediaShortcut())appendLog("WARNING: Media shortcut installation failed. See /data/AMPRStudio/launcher-install.log. The compressor is still available in the browser.\n");
+    else appendLog("Media shortcut and icon installed.\n");
+#endif
+    std::mutex lock;std::condition_variable available;std::deque<int> pending;
     for(int n=0;n<4;n++)startDetached([&](){for(;;){int fd;{std::unique_lock<std::mutex> guard(lock);available.wait(guard,[&](){return !pending.empty();});fd=pending.front();pending.pop_front();}handle(fd);}},1024*1024);
     for(;;){int fd=accept(server.fd,nullptr,nullptr);if(fd<0){if(errno==EINTR)continue;throw std::runtime_error("Accept failed");}{std::lock_guard<std::mutex> guard(lock);if(pending.size()>=16){close(fd);continue;}pending.push_back(fd);}available.notify_one();}
 }catch(const std::exception&e){fprintf(stderr,"LZ4 Compressor: %s\n",e.what());return 1;}}
