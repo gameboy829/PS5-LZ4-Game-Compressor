@@ -28,6 +28,9 @@ try:
         try:api('/api/gc/ampr-lz4/status');break
         except (OSError,urllib.error.URLError):time.sleep(.05)
     else:raise AssertionError('Service did not start')
+    diagnostic=api('/api/gc/ampr-lz4/report');assert diagnostic['schema']==1 and 'job' in diagnostic and 'logs' in diagnostic
+    assert 'launcher-install.log' in diagnostic['logs']
+    api('/api/gc/ampr-lz4/report','POST',False)
     assert request('/')[0]==200
     assert b'Controller' in request('/')[1]
     assert (root.parent/'VERSION').read_text().strip().split('-')[-1].encode() in request('/')[1] and b'Conversion options' in request('/')[1]

@@ -4,7 +4,7 @@
 #include <ps5/kernel.h>
 #endif
 static J diagnosticReport(){
-    J report={{"schema",1},{"appVersion",APP_VERSION},{"logs",J::object()}};
+    J report={{"ok",true},{"schema",1},{"appVersion",APP_VERSION},{"logs",J::object()}};
 #ifndef STUDIO_HOST_TEST
     char firmware[32];snprintf(firmware,sizeof(firmware),"0x%08x",kernel_get_fw_version());report["firmware"]=firmware;
 #endif

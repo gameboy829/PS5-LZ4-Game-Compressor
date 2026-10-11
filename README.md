@@ -1,6 +1,6 @@
 # LZ4 Game Compressor
 
-**Beta 5 — On-console PS5 game compression**
+**Beta 6 — On-console PS5 game compression**
 
 <img src="logo.png" width="128" alt="LZ4 Game Compressor logo">
 

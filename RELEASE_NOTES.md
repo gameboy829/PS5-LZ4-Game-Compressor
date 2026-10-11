@@ -1,9 +1,9 @@
-# LZ4 Game Compressor beta.5
+# LZ4 Game Compressor beta.6
 
-Report review now opens inside the app, so PS5 users can read diagnostics without downloading a file. A separate download button remains available for browsers that support it.
+Fixes private diagnostic reports incorrectly rejecting a successful console response as “HTTP 200”. Reports now include firmware, saved job state, setup and available console logs alongside the existing tab images, games, storage and settings.
 
-If Send private report is disabled, the app explains what is needed: a title of at least 5 characters, a description of at least 10 characters, consent, and collected diagnostics. Controller checkbox events now refresh the button state. Image capture has a timeout so it cannot leave collection waiting indefinitely.
+Missing send requirements are highlighted in the report form. Successful submission closes the form and shows a clear Report sent confirmation with its report ID.
 
-Update through Updates → Check for updates → Install and restart. Finish any conversion first. The ELF remains named LZ4-Game-Compressor.elf.
+Update through Updates → Check for updates → Install and restart, then submit a new report. Previously submitted reports cannot recover the missing console data.
 
-This beta converts only mountable PS5 game images and extracted game folder dumps. Keep backups; verification does not guarantee launch compatibility. Reports stay private and require consent; logs and screenshots may include game names and paths. Large logs include their last 1 MiB and are marked if truncated.
+This beta converts only mountable PS5 game images and extracted game folder dumps. Keep backups; verification does not guarantee launch compatibility. Reports require consent and remain private. Large logs include their last 1 MiB and are marked if truncated.
