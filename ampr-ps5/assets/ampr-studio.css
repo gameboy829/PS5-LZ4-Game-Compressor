@@ -20,3 +20,5 @@
 #reportDialog{font-size:1.8vh;padding:2vh 2vw}#reportDialog label{margin-top:.5vh;font-size:1.8vh}#reportDialog input:not([type=checkbox]),#reportDialog textarea{width:100%;padding:.5vh 1vw;font:inherit;color:var(--text);background:var(--bg);border:1px solid var(--line);border-radius:.5vh}#reportDialog p{font-size:1.6vh;margin:.7vh 0}#reportDialog .dialog-heading{margin-bottom:1vh}#reportImages{display:flex;justify-content:center;gap:1vw;margin:.5vh 0;max-height:12vh}#reportImages img{max-height:12vh!important}#reportDialog .actions{margin-top:1vh}
 
 #reportDialog #reportRequirements{white-space:pre-line;font-size:1.7vh;font-weight:600;padding:.8vh 1vw;border-radius:.6vh;line-height:1.4}.report-required{background:#382a12;color:#ffe2a1;border:1px solid #e5b75d}.report-ready{background:#15332c;color:#99efc6;border:1px solid #5bb793}
+
+@keyframes updatePulse{0%,100%{background:#263853;box-shadow:0 0 0 0 #9cc3ff00}50%{background:#446a9c;box-shadow:0 0 0 3px #9cc3ff99}}.update-alert{animation:updatePulse 1.8s ease-in-out infinite;border-color:#a9c4ff}@media(prefers-reduced-motion:reduce){.update-alert{animation:none;background:#446a9c;border:2px solid #a9c4ff}}
