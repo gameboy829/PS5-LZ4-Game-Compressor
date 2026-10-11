@@ -22,7 +22,6 @@ function progressSummary(state){
     'Verifying internal copy':'Checking that the internal copy matches the USB output byte for byte.'
   };
   state={...state,done:Number(state.done)||0,total:Number(state.total)||0,performance:state.performance?{...state.performance,readMiBps:Number(state.performance.readMiBps)||0,writeMiBps:Number(state.performance.writeMiBps)||0,workerUtilization:Number(state.performance.workerUtilization)||0}:null};
-  state={...state,done:Number(state.done)||0,total:Number(state.total)||0,performance:state.performance?{...state.performance,readMiBps:Number(state.performance.readMiBps)||0,writeMiBps:Number(state.performance.writeMiBps)||0,workerUtilization:Number(state.performance.workerUtilization)||0}:null};
   const bytes=state.progressUnit!=='files';const elapsed=state.stageElapsedSeconds||0;
   const rate=elapsed>0?state.done/elapsed:0;
   const amount=n=>bytes?`${(n/1073741824).toFixed(2)} GiB`:n.toLocaleString()+' files';
