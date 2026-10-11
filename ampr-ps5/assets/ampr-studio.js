@@ -8,7 +8,7 @@ async function api(path,method='GET',timeout=30000){const response=await fetch(p
 
 function selected(){return games[Number(byId('game').value)];}
 
-byId('refresh').onclick=async()=>{try{const result=await api('/api/gc/games');games=result.games||[];byId('game').replaceChildren();games.forEach((game,index)=>byId('game').add(new Option(game.name+" — "+game.sourceStorage,String(index))));byId('game').onchange();}catch(error){byId('log').textContent=`Discovery failed: ${error.message}`;}};
+byId('refresh').onclick=async()=>{try{const previous=selected();folderLoadFailure='';const result=await api('/api/gc/games');games=result.games||[];byId('game').replaceChildren();games.forEach((game,index)=>byId('game').add(new Option(game.name+" — "+(game.sourceType==='folder'?'Folder Dump':'Image')+" — "+game.sourceStorage,String(index))));const previousIndex=previous?games.findIndex(g=>g.sourcePath===previous.sourcePath):-1;if(previousIndex>=0)byId('game').value=String(previousIndex);byId('game').onchange();}catch(error){byId('log').textContent=`Discovery failed: ${error.message}`;}};
 
 byId('game').onchange=()=>{const game=selected();byId('source').textContent=game?`${game.sourceType==='folder'?'Original folder':'Original image'} · ${game.titleId} · ${game.sourceStorage} · ${game.sourcePath}`:'No mounted game found';if(game){byId('output').value=`${byId('destinationStorage').value||'/data/homebrew'}/${game.titleId}-app_AMPR`;byId('internal').value=`/data/homebrew/${game.titleId}-app_AMPR`;}mountAppearance(game&&game.readOnlyVerified);tvDestinationChanged();queueRequirements();measureGame();};
 
@@ -19,7 +19,30 @@ function query(){const game=selected();if(!game)throw new Error('Select a discov
 for(const id of ['output','internal','level'])byId(id).addEventListener('input',queueRequirements);
 
 let requirementsTimer=0,requirementsToken=0,requirementsBusy=false,requirementsMessage='Select a game and mount it before starting.';
-function mountAppearance(mounted){byId('mount').classList.toggle('mounted',!!mounted);byId('mount').textContent=mounted?'Mounted':'Mount game';byId('mountState').textContent=mounted?'Game mounted.':'Mount the selected game to begin.';}
+let folderLoadPromise=null,folderLoadFailure='';
+function mountAppearance(mounted){
+    const folder=selected()?.sourceType==='folder';
+    byId('mount').classList.toggle('mounted',!!mounted&&!folder);
+    byId('mount').classList.toggle('folder-source',folder);
+    byId('mount').disabled=folder||!!folderLoadPromise||tvWasActive||tvBenchmarkActive||startingConversion;
+    byId('mount').textContent=folder?(mounted?'Folder Dump Loaded':'Loading Folder Dump…'):(mounted?'Mounted':'Mount game');
+    byId('mountState').textContent=folder?(mounted?'Folder dump ready.':'Preparing folder dump…'):(mounted?'Game mounted.':'Mount the selected game to begin.');
+}
+async function loadFolderSource(source){
+    if(folderLoadPromise)await folderLoadPromise;
+    if(selected()?.sourcePath!==source.sourcePath)return;
+    if(folderLoadFailure===source.sourcePath)throw new Error('Folder dump could not be loaded. Refresh games to retry.');
+    folderLoadPromise=(async()=>{
+        const status=await api('/api/gc/ampr-lz4/status');
+        if(status.active||tvWasActive||tvBenchmarkActive||startingConversion)throw new Error('Wait for the current job to finish before loading a folder dump.');
+        if(selected()?.sourcePath!==source.sourcePath)return;
+        const listing=await api('/api/gc/games');
+        if(listing.games.some(g=>g.sourcePath===source.sourcePath&&g.readOnlyVerified))return;
+        await api('/api/gc/ampr-lz4/mount?'+new URLSearchParams({titleId:source.titleId,sourcePath:source.sourcePath}),'POST');
+    })();
+    try{await folderLoadPromise;}catch(error){folderLoadFailure=source.sourcePath;throw error;}
+    finally{folderLoadPromise=null;}
+}
 function queueRequirements(){clearTimeout(requirementsTimer);++requirementsToken;requirementsMessage='Checking requirements...';byId('startRequirements').textContent='';if(!tvWasActive&&!tvBenchmarkActive&&!startingConversion)byId('convert').disabled=false;requirementsTimer=setTimeout(()=>checkRequirements(),350);}
 async function checkRequirements(showMessage=false){
     clearTimeout(requirementsTimer);const token=++requirementsToken;requirementsBusy=true;
@@ -27,14 +50,15 @@ async function checkRequirements(showMessage=false){
         if(!selected())throw new Error('Select a game first.');
         if(!byId('destinationStorage').value)throw new Error('Connect writable storage for the compressed game.');
         const source=selected();const listing=await api('/api/gc/games');if(token!==requirementsToken)return false;const current=listing.games.find(g=>g.titleId===source.titleId&&g.sourcePath===source.sourcePath);mountAppearance(current&&current.readOnlyVerified);
+        if(source.sourceType==='folder'&&!current?.readOnlyVerified){await loadFolderSource(source);if(token!==requirementsToken)return false;}
         const result=await api('/api/gc/ampr-lz4/plan?'+query());if(token!==requirementsToken)return false;
         mountAppearance(result.readOnlyVerified);
-        if(!result.readOnlyVerified)requirementsMessage='Mount the selected game before starting.';
+        if(!result.readOnlyVerified)requirementsMessage=source.sourceType==='folder'?'Folder dump could not be verified read-only. Refresh games to retry.':'Mount the selected game before starting.';
         else if(!result.canStart)requirementsMessage=result.message||'Not enough space on the selected storage.';
         else{requirementsMessage='';byId('gameSize').textContent='Game: '+sizeText(result.logicalBytes)+' · Space needed: '+sizeText(result.requiredOutputBytes);}
         if(showMessage||byId('startRequirements').textContent)byId('startRequirements').textContent=requirementsMessage;
         return result.canStart;
-    }catch(e){if(token===requirementsToken){requirementsMessage=e.message;if(showMessage||byId('startRequirements').textContent)byId('startRequirements').textContent=requirementsMessage;}return false;}
+    }catch(e){if(token===requirementsToken){requirementsMessage=e.message;if(selected()?.sourceType==='folder'){byId('mount').textContent='Folder Dump Not Loaded';byId('mountState').textContent=e.message;}if(showMessage||byId('startRequirements').textContent)byId('startRequirements').textContent=requirementsMessage;}return false;}
     finally{if(token===requirementsToken)requirementsBusy=false;}
 }
 byId('plan').onclick=()=>checkRequirements(true);
@@ -46,7 +70,7 @@ function showProgress(state){if(state.benchmark){if(typeof tvBenchResume==='func
 
 async function poll(){if(polling)return;polling=true;try{const state=await api('/api/gc/ampr-lz4/status');showProgress(state);if(state.benchmark)return;byId('partialPaths').textContent=(state.partialFolders||[]).join('\n');if(!state.active){cancelRequested=false;const key=(state.partialFolders||[]).join('\n');if(key&&key!==cleanupPrompted&&!cleanupBusy&&!document.querySelector('dialog[open]')){cleanupPrompted=key;byId('cleanupStatus').textContent='';tvOpen('cleanupDialog');}}byId('phase').textContent=state.active?`${state.phase || 'Preparing'}${state.total?` · ${state.stagePercent.toFixed(1)}%`:''}`:state.result?`Failed: ${state.error}`:state.started?(state.verificationSkipped?'Complete: unverified output — checks skipped':'Complete: output verified')+(state.originalStatus?' · Original: '+state.originalStatus:'')+(state.shadowMountStatus?' · ShadowMount: '+state.shadowMountStatus:''):'Ready';if(!state.active&&cleanupNotice)byId('phase').textContent=cleanupNotice;byId('progress').value=state.active?state.stagePercent:state.result||!state.started?0:100;byId('cancel').disabled=!state.active;
 
-    const response=await fetch('/api/gc/ampr-lz4/log',{cache:'no-store'});if(response.ok)byId('log').textContent=await response.text();if(state.active)setTimeout(poll,1500);else{startingConversion=false;byId('mount').disabled=false;refreshSpace();byId('plan').disabled=false;byId('refresh').disabled=false;for(const id of ['destinationStorage','originalAction','verifyOutput','verifyCopy','restartShadowMount','game','mode','output','internal','level','paths','threads','benchmark','options'])byId(id).disabled=false;updateConversionOptions(false);queueRequirements();}
+    const response=await fetch('/api/gc/ampr-lz4/log',{cache:'no-store'});if(response.ok)byId('log').textContent=await response.text();if(state.active)setTimeout(poll,1500);else{startingConversion=false;mountAppearance(selected()?.readOnlyVerified);refreshSpace();byId('plan').disabled=false;byId('refresh').disabled=false;for(const id of ['destinationStorage','originalAction','verifyOutput','verifyCopy','restartShadowMount','game','mode','output','internal','level','paths','threads','benchmark','options'])byId(id).disabled=false;updateConversionOptions(false);queueRequirements();}
 
   }catch(error){byId('phase').textContent=`Connection interrupted: ${error.message}. The console job may still be running.`;setTimeout(poll,3000);}finally{polling=false;}}
 
@@ -88,4 +112,4 @@ byId('refreshSpace').onclick=refreshSpace;refreshSpace();
 
 
 
-byId('mount').onclick=async()=>{const game=selected();if(!game){byId('mountState').textContent='Select a game first.';return;}byId('mount').disabled=true;mountAppearance(false);try{const result=await api('/api/gc/ampr-lz4/mount?'+new URLSearchParams({titleId:game.titleId,sourcePath:game.sourcePath}),'POST');byId('mountState').textContent='Mounting game...';for(let n=0;n<10;n++){await new Promise(resolve=>setTimeout(resolve,1000));const ready=await checkRequirements();if(byId('mount').classList.contains('mounted')){byId('mountState').textContent='Mounted read-only.';if(!ready)byId('startRequirements').textContent=requirementsMessage;return;}}byId('mountState').textContent='Mount could not be verified. Try mounting again.';}catch(e){byId('mountState').textContent='Mount failed: '+e.message;byId('startRequirements').textContent=byId('mountState').textContent;}finally{byId('mount').disabled=false;}};
+byId('mount').onclick=async()=>{const game=selected();if(game?.sourceType==='folder')return;if(!game){byId('mountState').textContent='Select a game first.';return;}byId('mount').disabled=true;mountAppearance(false);try{const result=await api('/api/gc/ampr-lz4/mount?'+new URLSearchParams({titleId:game.titleId,sourcePath:game.sourcePath}),'POST');byId('mountState').textContent='Mounting game...';for(let n=0;n<10;n++){await new Promise(resolve=>setTimeout(resolve,1000));const ready=await checkRequirements();if(byId('mount').classList.contains('mounted')){byId('mountState').textContent='Mounted read-only.';if(!ready)byId('startRequirements').textContent=requirementsMessage;return;}}byId('mountState').textContent='Mount could not be verified. Try mounting again.';}catch(e){byId('mountState').textContent='Mount failed: '+e.message;byId('startRequirements').textContent=byId('mountState').textContent;}finally{byId('mount').disabled=selected()?.sourceType==='folder';}};
