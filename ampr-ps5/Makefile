@@ -14,7 +14,7 @@ standalone/assets.h: standalone/embed.py ../VERSION $(wildcard assets/*) $(wildc
 	python3 standalone/embed.py
 build:
 	mkdir -p build
-build/service.o: standalone/main.cpp standalone/http.h standalone/original.h standalone/thread.h standalone/assets.h | build
+build/service.o: standalone/main.cpp standalone/http.h standalone/original.h standalone/thread.h standalone/library.h standalone/assets.h | build
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 build/backend.o: src/ampr_backend.cpp src/ampr_benchmark.inc src/ampr_diagnostics.inc $(wildcard ../ampr-native/src/*) | build
 	$(CXX) $(CXXFLAGS) -c $< -o $@

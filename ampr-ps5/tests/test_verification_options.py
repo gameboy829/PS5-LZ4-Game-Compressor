@@ -29,4 +29,9 @@ with tempfile.TemporaryDirectory(prefix='lz4-verify-options-') as tmp:
     (full/'fakelib/libSceAmpr.sprx').write_bytes(original);(full/'fakelib/libSceAmpr.sprx').chmod(0o755)
     copied=tmp/'copy-skip';log=run('copy-skip',full,copied);assert (copied/'UNVERIFIED.txt').exists() and (copied/'eboot.bin').read_bytes()==(full/'eboot.bin').read_bytes()
     verifiedCopy=tmp/'copy-full';run('copy',full,verifiedCopy);assert not (verifiedCopy/'UNVERIFIED.txt').exists()
+    for mode in ['cancel-cleanup','cancel-refuse']:
+        partial=tmp/mode;run(mode,source,partial,runtime,tmp/'profiles')
+        assert not partial.exists() and not list(tmp.glob(mode+'.ampr-work-*'))
+        assert (source/'assets/content').read_bytes()==b'fixture'*100000
+    print('PASS: canceled pack cleanup removes output/workspace, ownership changes refuse deletion, original remains untouched')
     print('PASS: full verification remains default; pack/copy skip options omit checks and persist UNVERIFIED notice')

@@ -18,3 +18,6 @@ g++ -O2 -std=c++17 -pthread tests/original_host.cpp -o build/original-host
 python3 tests/test_original.py
 g++ -O2 -std=c++17 -pthread -Isrc tests/backend_production_host.cpp build/host-backend.o build/host-lz4.o build/host-lz4hc.o -o build/production-host
 python3 tests/test_verification_options.py
+
+g++ -O2 -std=c++17 -pthread tests/library_host.cpp -o build/library-host
+python3 tests/test_folder_library.py

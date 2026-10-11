@@ -15,21 +15,21 @@ function tvSetStorage(devices){
     if([...storage.options].some(o=>o.value===previous))storage.value=previous;
     const drive=byId('drive');drive.replaceChildren();for(const device of usable.filter(d=>/^\/mnt\/usb[0-7]$/.test(d.path)))drive.add(new Option(device.name,device.path));
     const backup=byId('originalLocation'),chosen=backup.value;backup.replaceChildren();
-    for(const device of usable)backup.add(new Option(device.name,device.path==='/data/homebrew'?'/data/game-backups':device.path+'/game-backups'));
+    for(const device of usable)backup.add(new Option(device.name,device.path==='/data/homebrew'?'/data/game-backups':device.path==='/mnt/ext1/games'?'/mnt/ext1/game-backups':device.path+'/game-backups'));
     if([...backup.options].some(o=>o.value===chosen))backup.value=chosen;
     tvDestinationChanged(storage.value!==previous);updateOriginalMovePath();
 }
-function sourceDrive(){const path=selected()?.sourcePath||'';return path.startsWith('/data/')?'/data/homebrew':path.match(/^\/mnt\/usb[0-7](?=\/)/)?.[0]||'';}
+function sourceDrive(){const path=selected()?.sourcePath||'';return path.startsWith('/data/')?'/data/homebrew':path.startsWith('/mnt/ext1/')?'/mnt/ext1/games':path.match(/^\/mnt\/usb[0-7](?=\/)/)?.[0]||'';}
 function tvDestinationChanged(reset=true){
     const destination=byId('destinationStorage').value,source=sourceDrive();
     const swapOption=byId('originalAction').querySelector('[value="swap"]');
-    const crossDrive=!!source&&!!destination&&source!==destination;swapOption.hidden=!crossDrive;swapOption.disabled=!crossDrive;
+    const folder=selected()?.sourceType==='folder';for(const option of byId('originalAction').options)if(option.value!=='keep')option.disabled=folder;if(folder)byId('originalAction').value='keep';const crossDrive=!folder&&!!source&&!!destination&&source!==destination;swapOption.hidden=!crossDrive;swapOption.disabled=!crossDrive;
     if(!crossDrive&&byId('originalAction').value==='swap')byId('originalAction').value='keep';
     const swap=byId('originalAction').value==='swap';
-    byId('mode').value=swap?'swap':destination==='/data/homebrew'?'internal':'usb';
+    byId('mode').value=swap?'swap':destination==='/data/homebrew'?'internal':destination==='/mnt/ext1/games'?'m2':'usb';
     byId('drive').value=destination==='/data/homebrew'?'':destination;
     if(reset&&selected()&&destination)byId('output').value=destination+'/'+selected().titleId+'-app_AMPR';
-    if(swap){if(reset||!byId('internal').value.startsWith(source+'/'))byId('internal').value=source+'/'+selected().titleId+'-app_AMPR';byId('originalLocation').value=destination==='/data/homebrew'?'/data/game-backups':destination+'/game-backups';byId('verifyOutput').checked=true;byId('verifyCopy').checked=true;}
+    if(swap){if(reset||!byId('internal').value.startsWith(source+'/'))byId('internal').value=source+'/'+selected().titleId+'-app_AMPR';byId('originalLocation').value=destination==='/data/homebrew'?'/data/game-backups':destination==='/mnt/ext1/games'?'/mnt/ext1/game-backups':destination+'/game-backups';byId('verifyOutput').checked=true;byId('verifyCopy').checked=true;}
     byId('destinationSummary').textContent=swap?'Swap: converted game → '+selected().sourceStorage+' · original → '+byId('destinationStorage').selectedOptions[0].textContent:byId('output').value||'A new game folder will be created automatically.';
     updateOriginalMovePath();updateConversionOptions(reset);
 }
@@ -69,7 +69,7 @@ let tvLastAction='',tvLastTime=0;function tvGamepad(){if(!document.hidden&&navig
 document.addEventListener('focusin',()=>{document.querySelectorAll('.controller-focus').forEach(el=>el.classList.remove('controller-focus'));document.activeElement?.classList.add('controller-focus');});
 byId('setupTab').focus();byId('destinationSummary').textContent=byId('output').value||'A new game folder will be created automatically.';
 
-refreshSpace();api('/api/gc/ampr-lz4/status').then(state=>{tvProgress(state);if(!state.active)byId('refresh').onclick().then(()=>{byId('destinationSummary').textContent=byId('output').value;});}).catch(()=>{});
+refreshSpace();byId('refresh').onclick().then(()=>{byId('destinationSummary').textContent=byId('output').value;poll();});
 
 function tvSplitOptions(){for(const name of ['packing','loose','verification']){const select=byId(name+'Split');select.replaceChildren();for(let total=name==='packing'?4:3;total<=8;total++){for(let readers=1;readers<total-1;readers++){if(name==='packing'){for(let writers=1;writers<total-readers-1;writers++){const workers=total-1-readers-writers;if(workers<1)continue;select.add(new Option(`${total} total: ${readers} readers / ${workers} compressors / ${writers} writers / 1 coordinator`,`${readers},${workers},${writers}`));}}else{const other=total-1-readers;select.add(new Option(`${total} total: ${readers} readers / ${other} ${name==='loose'?'writers':'check workers'} / 1 coordinator`,`${readers},${other}`));}}}}}
 tvSplitOptions();
