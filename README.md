@@ -1,6 +1,6 @@
 # LZ4 Game Compressor
 
-**Beta 4 — On-console PS5 game compression**
+**Beta 5 — On-console PS5 game compression**
 
 <img src="logo.png" width="128" alt="LZ4 Game Compressor logo">
 
@@ -187,4 +187,4 @@ No game content or proprietary Sony SDK is included.
 
 Choose **Report issue** in the app, enter a title and describe what happened. The report includes images of Setup and Progress, detected games and storage, dropdown choices, settings and diagnostic logs. Only the app interface is captured. Game names and file paths may appear in the report; game contents are not uploaded. Large logs include the last 1 MiB and are marked when truncated.
 
-Review the image previews or choose **Save report for review** to inspect the complete report. Check the consent box and choose **Send private report**. Reports go through the project’s Supabase service to a private GitHub repository accessible to its owner and any collaborators they authorize. No GitHub login is needed. If submission fails, save the report and retry later.
+Review the image previews or choose **Review report** to inspect the complete report. Check the consent box and choose **Send private report**. Reports go through the project’s Supabase service to a private GitHub repository accessible to its owner and any collaborators they authorize. No GitHub login is needed. If submission fails, save the report and retry later.
