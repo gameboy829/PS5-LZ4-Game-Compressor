@@ -1,5 +1,7 @@
 # LZ4 Game Compressor
 
+**Official creator account:** [@Gameboy82969 on X](https://x.com/Gameboy82969)
+
 **Beta 7 — On-console PS5 game compression**
 
 <img src="logo.png" width="128" alt="LZ4 Game Compressor logo">
